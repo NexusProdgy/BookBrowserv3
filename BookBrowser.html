@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Book Collection</title>
+    <style>
+        #book-display {
+            text-align: center;
+        }
+        #book-image {
+            width: 200px;
+            height: auto;
+        }
+        button {
+            margin: 5px;
+        }
+
+        #add-book {
+            margin: 20px auto;
+            padding: 20px;
+            width: 50%;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #add-book h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        /* Form styles */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input, select, button {
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: #007BFF;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+        /* Button styles */
+        button {
+            cursor: pointer;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button[type="reset"] {
+            background-color: #6c757d;
+        }
+
+        button[type="reset"]:hover {
+            background-color: #5a6268;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            #add-book {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="book-display">
+    <h1 id="book-title"></h1>
+    <p><strong>Author:</strong> <span id="book-author"></span></p>
+    <p><strong>Publication Year:</strong> <span id="book-publication-year"></span></p>
+    <p><strong>Genre:</strong> <span id="book-genre"></span></p>
+    <p><strong>Read:</strong> <span id="book-is-read"></span></p>
+    <img id="book-image" src="" alt="Book Cover">
+    <br>
+    <button id="prev-btn">Previous</button>
+    <button id="next-btn">Next</button>
+</div>
+
+<p id="current-index"></p>
+<div id="add-book">
+    <h2>Add a New Book</h2>
+    <form id="new-book-form" action="uploadfile.php" method="post" enctype="multipart/form-data">
+        <label>Title:</label>
+        <input type="text" name="title" id="new-title" required><br>
+        <label>Author:</label>
+        <input type="text" name="author" id="new-author" required><br>
+        <label>Publication Year:</label>
+        <input type="number" name="publicationYear" id="new-year" required><br>
+        <label>Genre:</label>
+        <input type="text" name="genre" id="new-genre" required><br>
+        <label>Read:</label>
+        <select name="isRead" id="new-is-read" required>
+            <option value="1">Yes</option>
+            <option value="0">No</option>
+        </select><br>
+        <label>Upload Book Cover:</label>
+        <input type="file" name="fileup" id="new-image" accept=".jpg, .png" required><br>
+        <button type="submit" name="submit">Add Book</button>
+        <button type="reset">Reset</button>
+    </form>
+</div>
+
+<script>
+    let currentIndex = 0; // Initially showing the first book
+    let totalBooks = 0; // We'll calculate the total number of books from the database
+
+    // Fetch total number of books from the database
+    function fetchBookCount() {
+        fetch('Fetch_Data.php')
+            .then(response => response.json())
+            .then(data => {
+                totalBooks = data.length; // assuming Fetch_Data.php returns all books
+                if (totalBooks > 0) {
+                    fetchBook(currentIndex); // Fetch the first book on page load
+                }
+            })
+            .catch(error => console.error("Error fetching book count:", error));
+    }
+
+    // Fetch a book by index
+    function fetchBook(index) {
+        console.log("Fetching book with index:", index); // Debugging log
+        fetch(`GetItem.php?index=${index}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error(data.error); // If an error, show it in the console
+                } else {
+                    displayBook(data); // Display the fetched book data
+                }
+            })
+            .catch(error => console.error("Error fetching book:", error));
+    }
+
+    // Function to display book data
+    function displayBook(book) {
+        console.log("Displaying book:", book); // Debugging log
+        document.getElementById("book-title").textContent = book.title || "N/A";
+        document.getElementById("book-author").textContent = book.author || "N/A";
+        document.getElementById("book-publication-year").textContent = book.publicationYear || "N/A";
+        document.getElementById("book-genre").textContent = book.genre || "N/A";
+        document.getElementById("book-is-read").textContent = book.isRead ? "Yes" : "No";
+        document.getElementById("book-image").src = book.image || "default.jpg";
+        document.getElementById("current-index").textContent = `${currentIndex + 1} / ${totalBooks}`; // Display current book number
+    }
+
+    // Event listener for the "Previous" button
+    document.getElementById("prev-btn").addEventListener("click", function () {
+        currentIndex = (currentIndex > 0) ? currentIndex - 1 : totalBooks - 1;
+        console.log("Previous book, currentIndex:", currentIndex); // Debugging log
+        fetchBook(currentIndex); // Fetch the previous book
+    });
+
+    // Event listener for the "Next" button
+    document.getElementById("next-btn").addEventListener("click", function () {
+        currentIndex = (currentIndex < totalBooks - 1) ? currentIndex + 1 : 0;
+        console.log("Next book, currentIndex:", currentIndex); // Debugging log
+        fetchBook(currentIndex); // Fetch the next book
+    });
+
+    // Call fetchBookCount when the page loads
+    window.onload = fetchBookCount;
+</script>
+
+</body>
+</html>
+
+
