@@ -32,7 +32,7 @@ if ($_FILES["fileup"]["size"] > 500000) {
 
 if ($uploadOk == 1) {
     if (move_uploaded_file($_FILES["fileup"]["tmp_name"], $target_file)) {
-        $conn = new mysqli("localhost", "jayescareno22", "password1", "BookCollection");
+        $conn = new mysqli("localhost", "root", "", "BookCollection");
 
         if ($conn->connect_error) {
             die("Connection failed: " . $conn->connect_error);
